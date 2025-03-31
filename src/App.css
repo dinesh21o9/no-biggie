@@ -1,17 +1,14 @@
-/* Global box-sizing */
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
-/* Container & Layout */
 .container {
   display: flex;
   height: 100vh;
   width: 100%;
-  background-color: #e3f2fd; /* light blue background */
+  background-color: #e3f2fd;
 }
 
-/* Left Sidebar */
 .sidebar {
   width: 250px;
   padding: 16px;
@@ -30,14 +27,12 @@
   cursor: default;
 }
 
-/* Main Container */
 .mainContainer {
   display: flex;
   flex-grow: 1;
   overflow: hidden;
 }
 
-/* Main Content Area */
 .main {
   flex-grow: 1;
   display: flex;
@@ -45,7 +40,6 @@
   overflow: hidden;
 }
 
-/* Toolbar Replacement (since AppBar is removed) */
 .toolbar {
   display: flex;
   align-items: center;
@@ -58,7 +52,6 @@
   flex-grow: 1;
 }
 
-/* Editor & Output Area */
 .editor-container {
   flex-grow: 1;
   padding: 16px;
@@ -87,14 +80,24 @@
   border: 1px solid #bdbdbd;
 }
 
-/* Vertical Resizer (between main and history) */
 .verticalResizer {
   width: 5px;
   cursor: col-resize;
   flex-shrink: 0;
+  position: relative;
 }
 
-/* Resizer (vertical for query editor) */
+.verticalResizer::after {
+  content: "⋮";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #757575;
+  font-size: 20px;
+  pointer-events: none;
+}
+
 .resizer {
   height: 10px;
   cursor: row-resize;
@@ -104,7 +107,18 @@
   margin-bottom: 8px;
 }
 
-/* Buttons */
+.resizer::after {
+  content: "...";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #757575;
+  font-size: 12px;
+  letter-spacing: 2px;
+  pointer-events: none;
+}
+
 .buttonRow {
   display: flex;
   justify-content: flex-end;
@@ -116,23 +130,19 @@
   background-color: #f50057;
 }
 
-/* CodeMirror Overrides */
 .CodeMirror {
   height: 100%;
   background-color: inherit;
   color: inherit;
 }
 
-/* Example dark background for the history sidebar */
 .historySidebar {
   border-left: 1px solid #333;
-  color: #eee;
   padding: 16px;
   overflow-y: auto;
   flex-shrink: 0;
 }
 
-/* The header row within the history sidebar (e.g., 'History' title + close button) */
 .historyHeader {
   display: flex;
   align-items: center;
@@ -140,43 +150,40 @@
   margin-bottom: 16px;
 }
 
-/* The 'History' title text */
 .historyTitle {
   font-weight: bold;
   color: #000000;
 }
 
-/* The small 'X' button for clearing history */
 .clearHistoryBtn {
   padding: 2px;
   color: #ccc;
   transition: color 0.2s;
 }
+
 .clearHistoryBtn:hover {
-  color: #fff;
+  color: #666;
 }
 
-/* Individual history items styled like a card */
 .historyItem {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  background-color: #383838;
-  border: 1px solid #333;
-  border-radius: 6px;
+  background-color: #f0f8ff;
+  border-radius: 8px;
+  padding: 16px;
   margin-bottom: 16px;
-  padding: 12px;
   width: 100%;
   cursor: default;
-  transition: background-color 0.2s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* Slight color change on hover */
 .historyItem:hover {
-  background-color: #303030;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* A small header row within each item (icons, timestamps, etc.) */
 .historyItemHeader {
   display: flex;
   align-items: center;
@@ -184,37 +191,44 @@
   width: 100%;
 }
 
-/* Left side (e.g., 'SQLite' label) */
 .historyItemTitle {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #fff;
 }
 
-/* Right side (icons, timestamp) */
 .historyItemActions {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-/* A small timestamp label */
-.historyItemTime {
-  font-size: 0.75rem;
-  color: #999;
-}
-
-/* The actual query text in the card */
 .historyItemQuery {
-  margin-top: 6px;
-  color: #ccc;
-  white-space: pre;
+  margin-top: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #333;
   cursor: pointer;
-  transition: color 0.2s;
 }
 
-/* On hover, brighten the query text slightly */
-.historyItemQuery:hover {
-  color: #fff;
+.schemaPaper {
+  margin-top: 16px;
+  padding: 12px;
+  background-color: #ffffff;
+  border: 1px solid #bdbdbd;
+  border-radius: 4px;
+}
+
+.schemaContent {
+  margin: 10px;
+  font-family: monospace;
+}
+
+.resize-indicator {
+  position: absolute;
+  font-size: 10px;
+  color: #757575;
+  pointer-events: none;
+  text-align: center;
 }

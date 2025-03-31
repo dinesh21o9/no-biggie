@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   Typography,
   Box,
@@ -47,6 +47,18 @@ const randomQueries = [
   { query: "SELECT * FROM orders WHERE EmployeeID = 5", table: "orders", filter: (row) => row.EmployeeID && parseInt(row.EmployeeID) === 5 }
 ];
 
+function getVisibleSchema(tableKey) {
+  const data = tables[tableKey].rows;
+  if (!data || data.length === 0) return "No schema available";
+  const firstRow = data[0];
+  let schemaLines = [];
+  for (let key in firstRow) {
+    let type = typeof firstRow[key];
+    schemaLines.push(`${key}: ${type}`);
+  }
+  return schemaLines.join("\n");
+}
+
 function App() {
   const [activeTable, setActiveTable] = useState("employees");
   const [query, setQuery] = useState("SELECT * FROM employees");
@@ -57,11 +69,12 @@ function App() {
   const [history, setHistory] = useState([]);
   const [historyWidth, setHistoryWidth] = useState(400);
   const [isHistoryResizing, setIsHistoryResizing] = useState(false);
+  const [showResizeTooltip, setShowResizeTooltip] = useState(false);
+  const [showHistoryResizeTooltip, setShowHistoryResizeTooltip] = useState(false);
 
   const editorContainerRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Set initial history width to 30% of container width
   useEffect(() => {
     if (containerRef.current) {
       const containerRect = containerRef.current.getBoundingClientRect();
@@ -82,8 +95,9 @@ function App() {
     setQuery(rq.query);
   };
 
-  const handleRunQuery = () => {
+  const handleRunQuery = useCallback(() => {
     setHistory((prev) => [query, ...prev.filter((q) => q !== query)]);
+    
     const lowerQuery = query.toLowerCase();
     let matchedTable = null;
     for (const tableKey of Object.keys(tables)) {
@@ -113,11 +127,21 @@ function App() {
     setActiveTable(matchedTable);
     setGridCols(tables[matchedTable].columns);
     setGridRows(filteredRows);
+  }, [query]); 
+
+  const handleHistoryItemClick = (q) => {
+    setQuery(q);
+  };
+
+  const runQueryFromHistory = (q) => {
+    setQuery(q);
+    setTimeout(() => {
+      handleRunQuery();
+    }, 0);
   };
 
   const clearHistory = () => setHistory([]);
 
-  // Keyboard shortcut: Ctrl+Enter to run query
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -127,9 +151,8 @@ function App() {
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [query]);
+  }, [handleRunQuery]);
 
-  // Vertical resizing for query editor
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isResizing || !editorContainerRef.current) return;
@@ -153,7 +176,6 @@ function App() {
     };
   }, [isResizing]);
 
-  // Horizontal resizing for history sidebar
   useEffect(() => {
     const handleMouseMove = (e) => {
       if (!isHistoryResizing || !containerRef.current) return;
@@ -193,6 +215,10 @@ function App() {
             </ListItem>
           ))}
         </List>
+        <div className="schemaPaper">
+          <Typography variant="subtitle1">Schema: {tables[activeTable].label}</Typography>
+          <pre className="schemaContent">{getVisibleSchema(activeTable)}</pre>
+        </div>
       </Box>
       <Box className="mainContainer">
         <Box className="main">
@@ -226,11 +252,16 @@ function App() {
                 e.preventDefault();
                 setIsResizing(true);
               }}
-            />
+              onMouseEnter={() => setShowResizeTooltip(true)}
+              onMouseLeave={() => setShowResizeTooltip(false)}
+            >
+              {showResizeTooltip && (
+                <Tooltip title="Drag to resize editor height" placement="top" open={true}>
+                  <span></span>
+                </Tooltip>
+              )}
+            </div>
             <Paper className="dataGridPaper">
-              {/* <Typography variant="subtitle1">
-                Table: {tables[activeTable].label}
-              </Typography> */}
               <DataGrid
                 rows={gridRows}
                 columns={gridCols}
@@ -248,7 +279,15 @@ function App() {
             e.preventDefault();
             setIsHistoryResizing(true);
           }}
-        />
+          onMouseEnter={() => setShowHistoryResizeTooltip(true)}
+          onMouseLeave={() => setShowHistoryResizeTooltip(false)}
+        >
+          {showHistoryResizeTooltip && (
+            <Tooltip title="Drag to resize history panel" placement="left" open={true}>
+              <span></span>
+            </Tooltip>
+          )}
+        </div>
         <Box className="historySidebar" style={{ width: historyWidth }}>
           <Box className="historyHeader">
             <Typography variant="h6" className="historyTitle">History</Typography>
@@ -263,11 +302,19 @@ function App() {
               <ListItem
                 key={index}
                 className="historyItem"
+                onClick={() => handleHistoryItemClick(q)}
+                style={{ cursor: 'pointer' }}
               >
                 <Box className="historyItemHeader">
                   <Box className="historyItemTitle">
                     <Tooltip title="Edit Connection">
-                      <IconButton size="small" sx={{ color: "#ccc" }}>
+                      <IconButton 
+                        size="small" 
+                        sx={{ color: "#ccc" }}
+                        onClick={(e) => {
+                          e.stopPropagation(); 
+                        }}
+                      >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           height="16"
@@ -279,7 +326,7 @@ function App() {
                         </svg>
                       </IconButton>
                     </Tooltip>
-                    <Typography variant="body2" sx={{ color: "#fff" }}>
+                    <Typography variant="body2" sx={{ color: "#000" }}>
                       SQL
                     </Typography>
                   </Box>
@@ -288,9 +335,9 @@ function App() {
                       <IconButton
                         size="small"
                         sx={{ color: "#ccc" }}
-                        onClick={() => {
-                          setQuery(q);
-                          handleRunQuery(); // if you want to run immediately
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          runQueryFromHistory(q);
                         }}
                       >
                         <svg
@@ -309,7 +356,6 @@ function App() {
                 <Typography
                   variant="body2"
                   className="historyItemQuery"
-                  onClick={() => setQuery(q)}
                 >
                   {q}
                 </Typography>
